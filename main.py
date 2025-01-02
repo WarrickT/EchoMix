@@ -4,9 +4,12 @@ import urllib.parse
 from flask import Flask, redirect, request, jsonify, session
 from datetime import datetime, timedelta
 
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 app = Flask(__name__)
-app.secret_key = ""
+app.secret_key = os.getenv("FlaskSecretKey")
 
 CLIENT_ID = "45b6eef52733429dae5b54f4906819cf"
 CLIENT_SECRET = "5fea48d8cd614e3385bfb9dd4dd53c93"
@@ -102,6 +105,7 @@ def refresh_token():
         )
 
         return redirect("/playlists")
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)
