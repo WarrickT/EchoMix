@@ -4,12 +4,8 @@ import urllib.parse
 from flask import Flask, redirect, request, jsonify, session
 from datetime import datetime, timedelta
 
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
 app = Flask(__name__)
-app.secret_key = os.getenv("FlaskSecretKey")
+app.secret_key = "12b167809764f08d121d6654bd33dd87"
 
 CLIENT_ID = "45b6eef52733429dae5b54f4906819cf"
 CLIENT_SECRET = "5fea48d8cd614e3385bfb9dd4dd53c93"
