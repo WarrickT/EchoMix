@@ -25,7 +25,7 @@ def index():
 # Create login endpoint
 @app.route("/login")
 def login():
-    scope = "user-read-private user-read-email"
+    scope = "user-read-private user-read-email playlist-read-private playlist-read-collaborative"
 
     params = {
         "client_id": CLIENT_ID,
@@ -56,12 +56,17 @@ def callback():
         response = requests.post(TOKEN_URL, data=req_body)
         token_info = response.json()
 
-        session["access_token"] = token_info["access_token"]
-        session["refresh_token"] = token_info["refresh_token"]
-        session["expires_at"] = datetime.now().timestamp() + token_info["expires_in"]
-        # Return timestamp exactly an hour from now
+        print(f"Token Info: {token_info}")
 
-        return redirect("/playlists")
+        if "access_token" in token_info:
+            session["access_token"] = token_info["access_token"]
+            session["refresh_token"] = token_info["refresh_token"]
+            session["expires_at"] = (
+                datetime.now().timestamp() + token_info["expires_in"]
+            )
+            return redirect("/playlists")
+        else:
+            return jsonify({"error": "Failed to retrieve access token."})
 
 
 @app.route("/playlists")
@@ -69,12 +74,17 @@ def get_playlists():
     if "access_token" not in session:
         return redirect("/login")
 
+    print(f"Access Token: {session['access_token']}")
+
     if datetime.now().timestamp() > session["expires_at"]:
         return redirect("/refresh-token")
 
     headers = {"Authorization": f"Bearer {session['access_token']}"}
-
     response = requests.get(API_BASE_URL + "me/playlists", headers=headers)
+
+    if response.status_code == 401:
+        return jsonify({"error": "Unauthorized. Please check your access token."})
+
     playlists = response.json()
 
     return jsonify(playlists)
@@ -95,12 +105,16 @@ def refresh_token():
         response = requests.post(TOKEN_URL, data=req_body)
         new_token_info = response.json()
 
-        session["access_token"] = new_token_info["access_token"]
-        session["expires_at"] = (
-            datetime.now().timestamp() + new_token_info["expires_in"]
-        )
+        print(f"New Token Info: {new_token_info}")
 
-        return redirect("/playlists")
+        if "access_token" in new_token_info:
+            session["access_token"] = new_token_info["access_token"]
+            session["expires_at"] = (
+                datetime.now().timestamp() + new_token_info["expires_in"]
+            )
+            return redirect("/playlists")
+        else:
+            return jsonify({"error": "Failed to refresh access token."})
 
 
 if __name__ == "__main__":
